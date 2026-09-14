@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP47BD - Wallet & Deposit</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .balance { font-size: 24px; font-weight: bold; color: #38bdf8; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; }
+        button { background: #0284c7; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h3>আপনার ওয়ালেট</h3>
+        <div class="balance">৳ <span id="userBalance">0.00</span></div>
+    </div>
+
+    <div class="card">
+        <h3>টাকা ডিপোজিট করুন</h3>
+        <select id="gateway">
+            <option value="bkash">বিকাশ (bKash)</option>
+            <option value="nagad">নগদ (Nagad)</option>
+        </select>
+        <input type="number" id="amount" placeholder="পরিমাণ (টাকা)" min="100">
+        <input type="text" id="trxId" placeholder="ট্রানজেকশন আইডি (TrxID)">
+        <button onclick="submitDeposit()">ডিপোজিট অনুরোধ পাঠান</button>
+        <p id="statusMsg" style="font-size: 14px; margin-top: 10px;"></p>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        const currentUserId = 1; // টেস্ট ইউজার আইডি
+
+        async function loadBalance() {
+            try {
+                const res = await fetch(`${API_URL}/balance/${currentUserId}`);
+                const data = await res.json();
+                document.getElementById('userBalance').innerText = Number(data.balance).toFixed(2);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function submitDeposit() {
+            const gateway = document.getElementById('gateway').value;
+            const amount = document.getElementById('amount').value;
+            const trxId = document.getElementById('trxId').value;
+            const msgEl = document.getElementById('statusMsg');
+
+            if (!amount || !trxId) {
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '⚠️ পরিমাণ এবং ট্রানজেকশন আইডি দিন!';
+                return;
+            }
+
+            msgEl.style.color = '#38bdf8';
+            msgEl.innerText = '⏳ রিকোয়েস্ট পাঠানো হচ্ছে...';
+
+            try {
+                const res = await fetch(`${API_URL}/deposit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId, gateway, amount, trxId })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    msgEl.style.color = '#22c55e';
+                    msgEl.innerText = '✅ ' + data.message;
+                    loadBalance();
+                } else {
+                    msgEl.style.color = '#ef4444';
+                    msgEl.innerText = '❌ ' + data.error;
+                }
+            } catch (err) {
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '❌ সার্ভারে সংযোগ করা যায়নি!';
+            }
+        }
+
+        // পেজ লোড হলে ব্যালেন্স ফেচ হবে
+        loadBalance();
+    </script>
+</body>
+</html>
