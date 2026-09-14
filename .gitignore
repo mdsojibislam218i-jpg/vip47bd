@@ -1,0 +1,22 @@
+# Environment & Secrets (সবচেয়ে জরুরি)
+.env
+.env.local
+.env.production
+config.local.php
+secrets.json
+
+# Dependencies
+node_modules/
+vendor/
+
+# Logs & Database dumps
+*.log
+npm-debug.log*
+*.sql
+*.sqlite
+
+# IDE & OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
