@@ -3,28 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP47BD - Wallet & Deposit</title>
+    <title>VIP47BD - Profile & Wallet</title>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .profile-header { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #38bdf8; background: #334155; }
+        .badge { background: #0284c7; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 5px; }
         .balance { font-size: 24px; font-weight: bold; color: #38bdf8; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; }
+        .gateway-btn { display: flex; align-items: center; gap: 8px; justify-content: center; }
         button { background: #0284c7; border: none; font-weight: bold; cursor: pointer; }
         button:hover { background: #0369a1; }
     </style>
 </head>
 <body>
 
+    <!-- প্রোফাইল কার্ড (কার্টুন ছবি, লেভেল, জয়েনিং ডেট ও ব্যালেন্স) -->
     <div class="card">
-        <h3>আপনার ওয়ালেট</h3>
-        <div class="balance">৳ <span id="userBalance">0.00</span></div>
+        <div class="profile-header">
+            <img id="userAvatar" class="avatar" src="" alt="Cartoon Avatar">
+            <div style="flex: 1;">
+                <h3 id="userName" style="margin: 0; color: #38bdf8;">লোড হচ্ছে...</h3>
+                <span id="userPhone" style="font-size: 13px; color: #94a3b8;">--</span><br>
+                <span class="badge">লেভেল: <span id="userLevel">1</span>/100</span>
+                <div style="font-size: 11px; color: #64748b; margin-top: 6px;">আইডি খোলার তারিখ: <span id="joinDate">--</span></div>
+            </div>
+            <div class="balance">৳ <span id="userBalance">0.00</span></div>
+        </div>
     </div>
 
+    <!-- ডিপোজিট সেকশন (বিকাশ লোগোসহ) -->
     <div class="card">
-        <h3>টাকা ডিপোজিট করুন</h3>
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 512 512" fill="#e2136e"><path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256 256-114.6 256-256S397.4 0 256 0zm108.8 384H312l-56-104-56 104h-52.8l83.2-152.8L150.4 128H200l56 102.4L312 128h50.4l-83.2 152.8L364.8 384z"/></svg>
+            টাকা ডিপোজিট করুন (বিকাশ)
+        </h3>
         <select id="gateway">
             <option value="bkash">বিকাশ (bKash)</option>
-            <option value="nagad">নগদ (Nagad)</option>
         </select>
         <input type="number" id="amount" placeholder="পরিমাণ (টাকা)" min="100">
         <input type="text" id="trxId" placeholder="ট্রানজেকশন আইডি (TrxID)">
@@ -32,15 +48,36 @@
         <p id="statusMsg" style="font-size: 14px; margin-top: 10px;"></p>
     </div>
 
+    <!-- উইথড্র সেকশন (বিকাশ, নগদ, রকেট লোগো/অপশনসহ) -->
+    <div class="card">
+        <h3>টাকা উইথড্র করুন</h3>
+        <select id="wGateway">
+            <option value="bkash">🔴 বিকাশ (bKash)</option>
+            <option value="nagad">🟠 নগদ (Nagad)</option>
+            <option value="rocket">🟣 রকেট (Rocket)</option>
+        </select>
+        <input type="text" id="wWalletNumber" placeholder="পার্সোনাল মোবাইল নম্বর (017xxxxxxxx)">
+        <input type="number" id="wAmount" placeholder="পরিমাণ (টাকা)" min="200">
+        <button onclick="submitWithdraw()" style="background: #e2136e;">উইথড্র অনুরোধ পাঠান</button>
+        <p id="wStatusMsg" style="font-size: 14px; margin-top: 10px;"></p>
+    </div>
+
     <script>
         const API_URL = 'http://localhost:3000/api';
-        const currentUserId = 1; // টেস্ট ইউজার আইডি
+        const currentUserId = 1;
 
-        async function loadBalance() {
+        async function loadProfile() {
             try {
-                const res = await fetch(`${API_URL}/balance/${currentUserId}`);
+                const res = await fetch(`${API_URL}/profile/${currentUserId}`);
                 const data = await res.json();
-                document.getElementById('userBalance').innerText = Number(data.balance).toFixed(2);
+                if (res.ok) {
+                    document.getElementById('userName').innerText = data.name;
+                    document.getElementById('userPhone').innerText = data.phone;
+                    document.getElementById('userAvatar').src = data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + data.name;
+                    document.getElementById('userLevel').innerText = data.level || 1;
+                    document.getElementById('userBalance').innerText = Number(data.balance).toFixed(2);
+                    document.getElementById('joinDate').innerText = data.created_at ? new Date(data.created_at).toLocaleDateString('bn-BD') : 'তারিখ নেই';
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -58,9 +95,6 @@
                 return;
             }
 
-            msgEl.style.color = '#38bdf8';
-            msgEl.innerText = '⏳ রিকোয়েস্ট পাঠানো হচ্ছে...';
-
             try {
                 const res = await fetch(`${API_URL}/deposit`, {
                     method: 'POST',
@@ -68,23 +102,43 @@
                     body: JSON.stringify({ userId: currentUserId, gateway, amount, trxId })
                 });
                 const data = await res.json();
-
-                if (res.ok) {
-                    msgEl.style.color = '#22c55e';
-                    msgEl.innerText = '✅ ' + data.message;
-                    loadBalance();
-                } else {
-                    msgEl.style.color = '#ef4444';
-                    msgEl.innerText = '❌ ' + data.error;
-                }
+                msgEl.style.color = res.ok ? '#22c55e' : '#ef4444';
+                msgEl.innerText = res.ok ? '✅ ' + data.message : '❌ ' + data.error;
             } catch (err) {
                 msgEl.style.color = '#ef4444';
                 msgEl.innerText = '❌ সার্ভারে সংযোগ করা যায়নি!';
             }
         }
 
-        // পেজ লোড হলে ব্যালেন্স ফেচ হবে
-        loadBalance();
+        async function submitWithdraw() {
+            const gateway = document.getElementById('wGateway').value;
+            const walletNumber = document.getElementById('wWalletNumber').value;
+            const amount = document.getElementById('wAmount').value;
+            const msgEl = document.getElementById('wStatusMsg');
+
+            if (!walletNumber || !amount) {
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '⚠️ নম্বর এবং পরিমাণ দিন!';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/withdraw`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId, gateway, walletNumber, amount })
+                });
+                const data = await res.json();
+                msgEl.style.color = res.ok ? '#22c55e' : '#ef4444';
+                msgEl.innerText = res.ok ? '✅ ' + data.message : '❌ ' + data.error;
+                if (res.ok) loadProfile();
+            } catch (err) {
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '❌ সার্ভারে সংযোগ করা যায়নি!';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadProfile);
     </script>
 </body>
 </html>
